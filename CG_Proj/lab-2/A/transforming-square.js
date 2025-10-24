@@ -9,8 +9,11 @@ var theta_step = 0.01;
 var rotate_loc, pre_rotate_loc, pre_scale_loc, rgb_loc;
 
 // A2-5 ADD NEW DECLARATIONS 
-
+var projective_loc;
+var translate_loc;
+var projective_inv_loc;
 // buffers and attributes
+var shear_loc;
 var vertices, grid, indices;
 
 var vertex_loc, grid_loc;
@@ -73,6 +76,10 @@ window.onload = async function()
     pre_scale_loc = gl.getUniformLocation(program, 'pre_scale');
     rotate_loc = gl.getUniformLocation(program, 'rotate');
     rgb_loc = gl.getUniformLocation(program, 'rgb');
+    translate_loc = gl.getUniformLocation(program, "translate");
+    shear_loc = gl.getUniformLocation(program, "shear");
+    projective_loc = gl.getUniformLocation(program, "projective");
+    projective_inv_loc = gl.getUniformLocation(program, "projective_inv");
 
     // A2-5 GET NECESSARY UNIFORM LOCATIONS
 
@@ -91,8 +98,20 @@ function render()
     let identity = mat_identity(4);
 
     // A1 -- DEFINE THESE TWO 4x4 MATRICES PROPERLY
-    let pre_scale = identity;
-    let pre_rotate = identity;
+    const a = 0.5;
+    const t = Math.PI / 4;
+    let pre_scale = [
+     [ a, 0, 0, 0 ],
+     [ 0, a, 0, 0 ],
+     [ 0, 0, 1, 0 ],
+     [ 0, 0, 0, 1 ],
+    ];
+    let pre_rotate = [
+     [ Math.cos(t), -Math.sin(t), 0, 0 ],
+     [ Math.sin(t),  Math.cos(t), 0, 0 ],
+     [ 0,                0,               1, 0 ],
+     [ 0,                0,               0, 1 ],
+    ];
 
     // update the rotation angle
     theta += theta_step;
@@ -105,11 +124,40 @@ function render()
     let side = Math.sqrt(2)/2.0;
 
     // A2-5 DEFINE NEW MATRICES
+    let shear = [
+    [1,  Math.tan(theta), 0, 0],
+    [0,  1, 0, 0],
+    [0,  0, 1, 0],
+    [0,  0, 0, 1],
+    ];
+    let translate = [
+    [1, 0, 0,  side / 2],
+    [0, 1, 0,  side / 2],
+    [0, 0, 1,  0],
+    [0, 0, 0,  1],
+    ];
+    let projective = [
+     [4/(2+side),            0, 0, 0],
+     [0,                     1, 0, ((side-2)*side)/(2*(side+2))],
+     [0,                     0, 1, 0],
+     [0, (2*(side-2))/(side*(side+2)), 0, 1]
+    ];
+    let projective_inv = [
+     [2+side, 0, 0, 0],
+     [0, Math.pow(2+side,2)/(2*side), 0, 1 - Math.pow(side,2)/4],
+     [0, 0, 4, 0],
+     [0, 4/Math.pow(side,2) - 1, 0, Math.pow(2+side,2)/(2*side)],
+    ];
 
     // set all transformations
     gl.uniformMatrix4fv(pre_rotate_loc, false, mat_float_flat_transpose(pre_rotate));
     gl.uniformMatrix4fv(pre_scale_loc, false, mat_float_flat_transpose(pre_scale));
     gl.uniformMatrix4fv(rotate_loc, false, mat_float_flat_transpose(rotate));
+    gl.uniformMatrix4fv(translate_loc, false, mat_float_flat_transpose(translate));
+    gl.uniformMatrix4fv(shear_loc, false, mat_float_flat_transpose(shear));
+    gl.uniformMatrix4fv(projective_loc, false, mat_float_flat_transpose(projective));
+    gl.uniformMatrix4fv(projective_inv_loc, false, mat_float_flat_transpose(projective_inv));
+
 
     // A2-5 SET NECESSARY TRANSFORMATION UNIFORMS
 
@@ -121,10 +169,15 @@ function render()
     // disable transformations before drawing grid, by setting them to the identity matrix
 
     // A2 DISABLE YOUR TRANSFORMATIONS 
-
+    gl.uniformMatrix4fv(translate_loc, false, mat_float_flat_transpose(identity));
     gl.uniformMatrix4fv(pre_rotate_loc, false, mat_float_flat_transpose(identity));
     gl.uniformMatrix4fv(pre_scale_loc, false, mat_float_flat_transpose(identity));
     gl.uniformMatrix4fv(rotate_loc, false, mat_float_flat_transpose(identity));
+    gl.uniformMatrix4fv(shear_loc, false, mat_float_flat_transpose(identity));
+    gl.uniformMatrix4fv(projective_loc, false, mat_float_flat_transpose(identity));
+    gl.uniformMatrix4fv(projective_inv_loc, false, mat_float_flat_transpose(identity));
+
+
     // set black colour
     gl.uniform3fv(rgb_loc, [0,0,0]);
 
