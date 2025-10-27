@@ -201,6 +201,68 @@ function mat_perspective(fovy, aspect, near, far)
    cam[3][3] = 0;
    return cam;
 }
+function mat_perspective_alt(right, top, near, far) {
+    
+    // From slide 04-B/17:
+    let fovy_radians = 2 * Math.atan(top / near);
+    
+    // Convert from radians to degrees since mat_perspective expects degrees
+    let fovy_degrees = fovy_radians * (180 / Math.PI);
+    
+    // Calculate aspect ratio
+    // From slide 04-B/17: aspect = right/top
+    let aspect = right / top;
+    return mat_perspective(fovy_degrees, aspect, near, far);
+}
+function mat_perspective_alt2(right, top, near, far) {
+    // Initialize the two matrices we need
+    let N = mat_zero(4, 4);  
+    let S = mat_zero(4, 4);  
+    
+    // Calculate scaling factors (from slide 04-B/17)
+    let s0 = near / right;  
+    let s1 = near / top;   
+    let s2 = 1;           
+    
+    // Build the S matrix (diagonal scaling matrix)
+    // S scales the x and y coordinates to normalize the field of view
+    S[0][0] = s0;
+    S[1][1] = s1;
+    S[2][2] = s2;
+    S[3][3] = 1;
+    N[0][0] = 1;
+    N[1][1] = 1;
+    N[2][2] = -(near + far) / (far - near);    // Maps z from [near,far] to [-1,1]
+    N[2][3] = -2 * near * far / (far - near);  // Perspective depth term
+    N[3][2] = -1;                               // Enables perspective divide
+    N[3][3] = 0;
+    
+    // The final camera matrix is the product: cam = N * S
+    let cam = mat_prod(N, S); 
+    return cam;
+}
+// Test functions to be used in the console
+function test_alt_mat() { 
+    // Test parameters - using typical values
+    let fovy = 60;          
+    let aspect = 16/9;      
+    let near = 0.1;     
+    let far = 100;
+    // Calculate right and top from fovy and aspect
+    // These are the coordinates we would use in our alternative functions
+    let top = near * Math.tan((fovy * Math.PI / 180) / 2);
+    let right = top * aspect;
+    // Original mat
+    let mat_original = mat_perspective(fovy, aspect, near, far);
+    mat_console_log(mat_original);
+    // Alternative mat
+    let mat_alt1 = mat_perspective_alt(right, top, near, far);
+    mat_console_log(mat_alt1);
+    // Second alternative
+    let mat_alt2 = mat_perspective_alt2(right, top, near, far);
+    mat_console_log(mat_alt2);
+
+}
 function mat_lookat(eye, at, up)
 {
 	// Construct the standard modelview matrix.
