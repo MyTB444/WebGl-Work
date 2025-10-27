@@ -259,7 +259,6 @@ function render_control()
     modelview = mat_identity(4);
 
     // C1: DEFINE ROTATION AND TRANSLATION HERE
-    theta += theta_step;
     translation = [
     [1,0,0,0],
     [0,1,0,0],
@@ -268,7 +267,6 @@ function render_control()
     ];
 
     const c = Math.cos(theta), s = Math.sin(theta);
-// Y-rotation by theta
     rotation = [
     [ c, 0,  s, 0],
     [ 0, 1,  0, 0],
@@ -317,6 +315,7 @@ function render_control()
     capture_canvas_check();
 
     // C1: UPDATE ROTATION ANGLE AND SET ANIMATION CALLBACK
+    theta += theta_step;
     render();
 
     // B1: INSERT CALLBACK CODE HERE
