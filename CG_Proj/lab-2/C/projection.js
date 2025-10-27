@@ -9,9 +9,10 @@ const UNSIGNED_SHORT_size = 2;
 var console_log = function() {};
 
 // B4 MODIFY SCENE PARAMETERS
-var num_triangles = 1000;
+var num_triangles = 50;
 var tri_radius = 50;
 var max_depth = 100;
+var dz = max_depth / 2;
 
 // B5 MODIFY CAMERA PARAMETERS
 let vert_fov = Math.PI/2;
@@ -23,7 +24,7 @@ let aspect = 1;
 let near_top = near * Math.tan(vert_fov/2);
 let far_top = far * Math.tan(vert_fov/2);
 
-var theta = 0.0;
+var theta = 0.000;
 var theta_step = 0.005;
 
 // canvases and contexts
@@ -233,6 +234,9 @@ window.onload = async function()
     alpha_loc = gl.getUniformLocation(program, 'alpha');
 
     // C1: GET ROTATION AND TRANSLATION LOCATIONS HERE
+    rotation_loc    = gl.getUniformLocation(program, "rotation");
+    translation_loc = gl.getUniformLocation(program, "translation");
+
 
     // --- rendering options ---
 
@@ -255,9 +259,25 @@ function render_control()
     modelview = mat_identity(4);
 
     // C1: DEFINE ROTATION AND TRANSLATION HERE
+    theta += theta_step;
+    translation = [
+    [1,0,0,0],
+    [0,1,0,0],
+    [0,0,1, dz],
+    [0,0,0,1],
+    ];
+
+    const c = Math.cos(theta), s = Math.sin(theta);
+// Y-rotation by theta
+    rotation = [
+    [ c, 0,  s, 0],
+    [ 0, 1,  0, 0],
+    [-s, 0,  c, 0],
+    [ 0, 0,  0, 1],
+    ];
 
     // HIDE FRUSTUM ON FIRST RENDER
-    render_triangles = false;
+    render_triangles = true;
     render_near_plane = false;
     render_far_plane = false;
     render_side_planes = false;
@@ -285,7 +305,7 @@ function render_control()
     projection = mat_perspective(70, aspect, 1, 500);
 
     // B2, B3, B4 -- MODIFY RENDERING CONTROL
-    render_triangles = false; 
+    render_triangles = true; 
     render_near_plane = true;
     render_far_plane = true;
     render_side_planes = true;
@@ -297,6 +317,7 @@ function render_control()
     capture_canvas_check();
 
     // C1: UPDATE ROTATION ANGLE AND SET ANIMATION CALLBACK
+    render();
 
     // B1: INSERT CALLBACK CODE HERE
     window.setTimeout(render_control, 1000/60);
@@ -315,6 +336,8 @@ function render()
     gl.uniformMatrix4fv(projection_loc, false, mat_float_flat_transpose(projection));
     
     // C1: SET ROTATION AND TRANSLATION HERE
+    gl.uniformMatrix4fv(translation_loc, false, mat_float_flat_transpose(translation));
+    gl.uniformMatrix4fv(rotation_loc,    false, mat_float_flat_transpose(rotation));
 
     // enable colour in shader
     gl.uniform1i(use_colour_loc, true);
@@ -326,6 +349,9 @@ function render()
     }
 
     // C1: DISABLE ROTATION AND TRANSLATION HERE
+    const I = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+    gl.uniformMatrix4fv(translation_loc, false, mat_float_flat_transpose(I));
+    gl.uniformMatrix4fv(rotation_loc,    false, mat_float_flat_transpose(I));
 
     if(render_near_plane || render_far_plane || render_side_edges)
         console_log('Drawing frustum...');

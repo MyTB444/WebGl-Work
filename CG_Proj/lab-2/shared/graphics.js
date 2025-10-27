@@ -201,7 +201,6 @@ function mat_perspective(fovy, aspect, near, far)
    cam[3][3] = 0;
    return cam;
 }
-
 function mat_lookat(eye, at, up)
 {
 	// Construct the standard modelview matrix.
