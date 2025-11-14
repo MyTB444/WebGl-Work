@@ -24,7 +24,7 @@ var material = {
 };
 
 // A2 -- CHANGE THIS
-var num_models = 1;
+var num_models = 50;
 
 // modelview parameters
 var transform = [];
@@ -156,12 +156,16 @@ async function render()
         let z = (far + near)/2;
 
         // 4x4 rigid motion
-        let motion = mat_motion(theta, [0,1,0], [0,0,-z]);
+        let motion =  mat_motion(theta, transform[k].axis, transform[k].location);
 
         // uniform scaling
-        let scaling = mat_scaling([1,1,1]);
+        let scaling = mat_scaling(transform[k].scale);
+
+        let fixedRotation = mat_motion(Math.PI / 2, [1, 0, 0], [0, 0, 0]);
 
         modelview = mat_prod(motion, scaling);
+
+        modelview = mat_prod(motion, mat_prod(fixedRotation, scaling));
 
         gl.uniformMatrix4fv(modelview_loc, false, mat_float_flat_transpose(modelview));
         gl.drawElements(gl.TRIANGLES, mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
