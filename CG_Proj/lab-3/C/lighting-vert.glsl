@@ -17,6 +17,7 @@ varying vec3 m, s, t;
 
 void main()
 {
+    gl_PointSize = 5.0;
     // transform point to camera coordinates
     vec4 p = modelview * vec4(vertex,1.0);
 

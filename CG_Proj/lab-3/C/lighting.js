@@ -1,8 +1,8 @@
 // ECS610U -- Miles Hansard 2021
 'use strict';
 var mesh, canvas, gl;
-const vs_file = './lighting-vert-pv.glsl';
-const fs_file = './lighting-frag-pv.glsl';
+const vs_file = './lighting-vert.glsl';
+const fs_file = './lighting-frag.glsl';
 
 // illuminant properties
 // B2 -- MODIFY
@@ -34,7 +34,7 @@ let vert_fov_deg = 20.0;
 let near = 7.0;
 let far = 12.0;
 let aspect = 1;
-var theta = Math.PI;
+var theta = 0.0;
 
 // buffers and attributes
 var projection, modelview, animate = false;
@@ -114,7 +114,7 @@ async function init(meshes)
     // --- rendering setup ---
 
     gl.viewport(0, 0, canvas.width, aspect*canvas.height);
-    gl.clearColor(0.75, 0.75, 0.75, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.lineWidth(1.0);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
