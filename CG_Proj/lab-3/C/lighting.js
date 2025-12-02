@@ -75,7 +75,17 @@ async function init(meshes)
     normal_loc = gl.getAttribLocation(program, 'normal');
     gl.enableVertexAttribArray(normal_loc);
 
-    // gl buffers will be created automatically by shared/webgl-obj-loader.js 
+    // gl buffers will be created automatically by shared/webgl-obj-loader.js
+    //for (let i = 0; i < mesh.vertices.length; i += 3) {
+    //mesh.vertices[i    ] += 0.05 * random(-1, 1);  // x
+    //mesh.vertices[i + 1] += 0.05 * random(-1, 1);  // y
+    //mesh.vertices[i + 2] += 0.05 * random(-1, 1);  // z
+    //} 
+    for (let i = 0; i < mesh.vertexNormals.length; i += 3) {
+    mesh.vertexNormals[i]     += 0.15 * random(-1, 1);  // nx
+    mesh.vertexNormals[i + 1] += 0.15 * random(-1, 1);  // ny
+    mesh.vertexNormals[i + 2] += 0.15 * random(-1, 1);  // nz
+    }
     OBJ.initMeshBuffers(gl, mesh);
 
     // setup vertex attributes
@@ -134,6 +144,7 @@ async function init(meshes)
         transform[k].axis = [random(-1,1), random(-1,1), random(-1,1)];
     }
 
+
     render();
 }
 
@@ -152,16 +163,34 @@ async function render()
 
         // A1, A2 -- MODIFY HERE 
 
-        // average scene depth
         let z = (far + near)/2;
 
-        // 4x4 rigid motion
-        let motion = mat_motion(theta, [0,1,0], [0,0,-z]);
+        // Bouncing up and down
+        let bounceHeight = 0.5 * Math.sin(theta * 3.0);
+        let bouncingPosition = [0, bounceHeight, -z];
 
-        // uniform scaling
-        let scaling = mat_scaling([1,1,1]);
+        // Spin on multiple axes
+        let spinY = mat_rotation(theta, [0, 1, 0]);           
+        let spinX = mat_rotation(theta * 0.5, [1, 0, 0]);    
+        
+        let combinedRotation = mat_prod(spinY, spinX);
 
-        modelview = mat_prod(motion, scaling);
+        // Wobbling scale (breathing effect)
+        let scaleAmount = 1.0 + 0.2 * Math.sin(theta * 2.0);
+        let wobbleScale = mat_scaling([scaleAmount, scaleAmount, scaleAmount]);
+
+        // Motion around center
+        let orbitRadius = 2.0;
+        let orbitX = orbitRadius * Math.cos(theta * 0.5);
+        let orbitZ = orbitRadius * Math.sin(theta * 0.5);
+        let orbitPosition = [orbitX, bounceHeight, -z + orbitZ];
+
+        // Translate to the orbiting + bouncing position
+        let translation = mat_translation(orbitPosition);
+
+        let fullTransform = mat_prod(translation, mat_prod(mat_hom(combinedRotation), wobbleScale));
+
+        modelview = fullTransform;
 
         gl.uniformMatrix4fv(modelview_loc, false, mat_float_flat_transpose(modelview));
         gl.drawElements(gl.TRIANGLES, mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
