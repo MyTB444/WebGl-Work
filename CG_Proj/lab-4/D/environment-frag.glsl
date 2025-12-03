@@ -17,12 +17,13 @@ uniform sampler2D texture;
 uniform float canvas_width;
 float width = 850.0;
 vec3 base = vec3(1.0); // used for capturing vignette alone
+uniform bool render_wire;
 
 float vignette(vec2 fragCoord) {
     vec2 uv = fragCoord / vec2(width, width);
     vec2 p  = uv * 2.0 - 1.0;          // centre at (0,0)
     float r = length(p);
-    float vmin = 0.1;
+    float vmin = 0.3;
     float s = smoothstep(0.6, 1.0, r); // inner and outer radius
     return 1.0 - (1.0 - vmin) * s;
 }
@@ -39,7 +40,7 @@ void main()
         gl_FragColor = textureCube(cubemap,vec3(-d.x,d.y,d.z));
         //float v = vignette(gl_FragCoord.xy);
         //gl_FragColor = vec4(base * v, 1.0);
-        //gl_FragColor.rgb *= vignette(gl_FragCoord.xy);
+        gl_FragColor.rgb *= vignette(gl_FragCoord.xy);
 
 
     }
@@ -70,6 +71,9 @@ void main()
 
         // reflected background colour
         vec4 reflection_colour = textureCube(cubemap,vec3(-r.x,r.y,r.z));
+        float gamma_value = 4.0;
+        reflection_colour = gamma_transform(reflection_colour, gamma_value);
+
 
         // blinn-phong lighting
 
@@ -94,10 +98,12 @@ void main()
             gl_FragColor = reflection_colour;
 
         }
-        //gl_FragColor.rgb *= vignette(gl_FragCoord.xy);
+        if (render_wire) gl_FragColor = vec4(vec3(0.7), 1.0);
+        gl_FragColor.rgb *= vignette(gl_FragCoord.xy);
         //float v = vignette(gl_FragCoord.xy);
         //gl_FragColor = vec4(base * v, 1.0);
         //gl_FragColor.rgb *= 0.5;
+
     }
 }
 
